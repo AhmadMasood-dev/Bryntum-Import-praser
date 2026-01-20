@@ -1,0 +1,6 @@
+dependency-reduced-pom.xml
+target/**
+!target/bryntum*.jar
+.settings/**
+.project
+.classpath
