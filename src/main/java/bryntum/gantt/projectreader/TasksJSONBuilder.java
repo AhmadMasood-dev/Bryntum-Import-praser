@@ -36,7 +36,9 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
 
     // field names
     String idField;
+    String indexField;
     String nameField;
+    String notesField;
     String startField;
     String finishField;
     String durationField;
@@ -77,7 +79,9 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
     public void loadProperties(Properties properties) {
         // load field names
         idField = properties.getProperty("task.UNIQUE_ID");
+        indexField = properties.getProperty("task.INDEX");
         nameField = properties.getProperty("task.NAME");
+        notesField = properties.getProperty("task.NOTES");
         startField = properties.getProperty("task.START");
         finishField = properties.getProperty("task.FINISH");
         durationField = properties.getProperty("task.DURATION");
@@ -178,6 +182,28 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
      * @return JSON object keeping the extracted task data
      */
     public JSONObject getTaskJSON(Task task) {
+        return getTaskJSON(task, null);
+    }
+
+    private Integer getTaskIndexFromParent(Task task) {
+        Task parent = task.getParentTask();
+
+        if (parent == null) {
+            return null;
+        }
+
+        int index = 0;
+        for (Task sibling : parent.getChildTasks()) {
+            if (sibling == task) {
+                return index;
+            }
+            index++;
+        }
+
+        return null;
+    }
+
+    private JSONObject getTaskJSON(Task task, Integer index) {
         JSONObject taskJSON = new JSONObject();
 
         LocalDateTime suspendDate = task.getSuspendDate();
@@ -186,7 +212,18 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
     	LocalDateTime endDate = task.getFinish();
 
         taskJSON.put(idField, task.getUniqueID());
+        if (indexField != null) {
+            Integer taskIndex = index != null ? index : getTaskIndexFromParent(task);
+            if (taskIndex != null) {
+                taskJSON.put(indexField, taskIndex);
+            }
+        }
         taskJSON.put(nameField, task.getName());
+
+        String notes = task.getNotes();
+        if (notesField != null && notes != null && !notes.isEmpty()) {
+            taskJSON.put(notesField, notes);
+        }
 
         if (startDate != null) {
             taskJSON.put(startField, dateTimeFormat.format(task.getStart()));
@@ -312,8 +349,10 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
         // retrieve the task children info
         JSONArray children = new JSONArray();
 
+        int childIndex = 0;
         for (Task child : task.getChildTasks()) {
-            children.put(getTaskJSON(child));
+            children.put(getTaskJSON(child, childIndex));
+            childIndex++;
         }
 
         if (children.length() > 0) {
@@ -343,7 +382,7 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
         }
 
         for (Task task : taskSource.getChildTasks()) {
-            taskListJSON.put(getTaskJSON(task));
+            taskListJSON.put(getTaskJSON(task, taskListJSON.length()));
         }
 
         result.put(childrenField, taskListJSON);
