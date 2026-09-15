@@ -45,6 +45,8 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
     String durationUnitField;
     String workField;
     String workUnitField;
+    String actualWorkField;
+    String actualWorkUnitField;
     String calendarIdField;
     String percentCompleteField;
     String milestoneField;
@@ -92,6 +94,8 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
         durationUnitField = properties.getProperty("task.DURATION_UNIT");
         workField = properties.getProperty("task.WORK");
         workUnitField = properties.getProperty("task.WORK_UNIT");
+        actualWorkField = properties.getProperty("task.ACTUAL_WORK");
+        actualWorkUnitField = properties.getProperty("task.ACTUAL_WORK_UNIT");
         calendarIdField = properties.getProperty("task.CALENDAR");
         percentCompleteField = properties.getProperty("task.PERCENT_COMPLETE");
         milestoneField = properties.getProperty("task.MILESTONE");
@@ -250,6 +254,12 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
         if (work != null) {
             taskJSON.put(workField, work != null ? work.getDuration() : null);
             taskJSON.put(workUnitField, getUnitByTimeUnit(work.getUnits()));
+        }
+
+        Duration actualWork = task.getActualWork();
+        if (actualWork != null) {
+            taskJSON.put(actualWorkField, actualWork.getDuration());
+            taskJSON.put(actualWorkUnitField, getUnitByTimeUnit(actualWork.getUnits()));
         }
 
         ProjectCalendar calendar = task.getCalendar();
