@@ -54,6 +54,10 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
     String ignoreResourceCalendarField;
     String constraintDateField;
     String constraintTypeField;
+    String deadlineField;
+    String activeField;
+    String actualStartField;
+    String actualFinishField;
     String baselineStartField;
     String baselineFinishField;
     String baselineDurationField;
@@ -97,6 +101,10 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
         ignoreResourceCalendarField = properties.getProperty("task.IGNORE_RESOURCE_CALENDAR");
         constraintDateField = properties.getProperty("task.CONSTRAINT_DATE");
         constraintTypeField = properties.getProperty("task.CONSTRAINT_TYPE");
+        deadlineField = properties.getProperty("task.DEADLINE");
+        activeField = properties.getProperty("task.ACTIVE");
+        actualStartField = properties.getProperty("task.ACTUAL_START");
+        actualFinishField = properties.getProperty("task.ACTUAL_FINISH");
         baselineStartField = properties.getProperty("task.BASELINE_START");
         baselineFinishField = properties.getProperty("task.BASELINE_FINISHES");
         baselineDurationField = properties.getProperty("task.BASELINE_DURATION");
@@ -267,6 +275,25 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
         ConstraintType constraintType = task.getConstraintType();
         if (constraintType != null) {
             taskJSON.put(constraintTypeField, getConstraintType(constraintType));
+        }
+
+        LocalDateTime deadline = task.getDeadline();
+        if (deadlineField != null && deadline != null) {
+            taskJSON.put(deadlineField, dateTimeFormat.format(deadline));
+        }
+
+        if (activeField != null) {
+            taskJSON.put(activeField, task.getActive());
+        }
+
+        LocalDateTime actualStart = task.getActualStart();
+        if (actualStartField != null && actualStart != null) {
+            taskJSON.put(actualStartField, dateTimeFormat.format(actualStart));
+        }
+
+        LocalDateTime actualFinish = task.getActualFinish();
+        if (actualFinishField != null && actualFinish != null) {
+            taskJSON.put(actualFinishField, dateTimeFormat.format(actualFinish));
         }
 
         // If baselines field is configured - extract baselines as an array

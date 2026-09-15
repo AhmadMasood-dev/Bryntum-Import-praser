@@ -58,7 +58,13 @@ public class AssignmentsJSONBuilder implements JSONBuilder<JSONArray> {
         result.put(taskIdField, assignment.getTaskUniqueID());
         result.put(rateTableField, assignment.getCostRateTableIndex());
 
-        ResourceType resourceType = assignment.getResource().getType();
+        Resource resource = assignment.getResource();
+        if (resource == null) {
+            return result;
+        }
+
+        ResourceType resourceType = resource.getType();
+
 
         switch (resourceType) {
 	    	case MATERIAL:
