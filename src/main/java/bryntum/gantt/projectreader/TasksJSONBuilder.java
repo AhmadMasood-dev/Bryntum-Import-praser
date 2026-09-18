@@ -403,6 +403,18 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
         return taskJSON;
     }
 
+    /**
+     * The project summary row: unique ID 0 at outline level 0.
+     *
+     * Both getters return {@link Integer}, so `task.getUniqueID() == 0` would unbox and throw a
+     * NullPointerException on a file that leaves either unset - taking down the whole parse with
+     * a 500 the caller cannot interpret.
+     */
+    private static boolean isProjectSummaryRow(Task task) {
+        return Integer.valueOf(0).equals(task.getUniqueID())
+            && Integer.valueOf(0).equals(task.getOutlineLevel());
+    }
+
     @Override
     public JSONObject buildJSON(ProjectFile projectFile) {
         JSONObject result = new JSONObject();
@@ -413,12 +425,25 @@ public class TasksJSONBuilder implements JSONBuilder<JSONObject> {
 
         ChildTaskContainer taskSource = projectFile;
 
-        // If that's an MS Project file w/ "Show Project Summary Task" option disabled - skip root level task which represents the project summary
-        if (!this.isMpx && projectProperties.getFileApplication() == "Microsoft" && !projectProperties.getShowProjectSummaryTask()) {
-            taskSource = projectFile.getChildTasks().get(0);
+        // If that's an MS Project file w/ "Show Project Summary Task" option disabled - skip the
+        // task representing the project summary.
+        boolean skipSummaryRow = !this.isMpx
+            && "Microsoft".equals(projectProperties.getFileApplication())
+            && !projectProperties.getShowProjectSummaryTask();
+
+        if (skipSummaryRow) {
+            taskSource = projectFile.getChildTasks().stream()
+                .filter(TasksJSONBuilder::isProjectSummaryRow)
+                .filter(t -> !t.getChildTasks().isEmpty())
+                .findFirst()
+                .map(t -> (ChildTaskContainer) t)
+                .orElse(projectFile);
         }
 
         for (Task task : taskSource.getChildTasks()) {
+            if (skipSummaryRow && isProjectSummaryRow(task) && task.getChildTasks().isEmpty()) {
+                continue;
+            }
             taskListJSON.put(getTaskJSON(task, taskListJSON.length()));
         }
 
